@@ -161,11 +161,13 @@ nav#tabs button.on{color:var(--acc)}
 nav#tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 84px);transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:9;white-space:nowrap}
 #toast.show{opacity:1;transform:translate(-50%,0)}
+#testbadge{position:fixed;top:calc(env(safe-area-inset-top) + 6px);right:8px;background:var(--danger);color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.06em;pointer-events:none;z-index:9}
 </style>
 </head>
 <body>
 <main id="view"></main>
 <div id="toast"></div>
+<div id="testbadge" hidden>TEST</div>
 <nav id="tabs">
   <button data-act="tab" data-tab="train"><svg viewBox="0 0 24 24"><path d="M6 7v10M3 9.5v5M18 7v10M21 9.5v5M6 12h12"/></svg>Train</button>
   <button data-act="tab" data-tab="progress"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 15l5-5 4 3 6-7"/></svg>Progress</button>
@@ -177,6 +179,8 @@ nav#tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2
 <script>
 /* ---------- helpers ---------- */
 const KEY = 'liftlog.v1';
+const PROD_HOST = 'mkmbader.github.io';
+const IS_PROD = location.hostname === PROD_HOST;
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -739,6 +743,7 @@ document.addEventListener('keydown', ev => {
 
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 render();
+$('#testbadge').hidden = IS_PROD;
 // ask the browser not to evict localStorage under storage pressure
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 </script>
