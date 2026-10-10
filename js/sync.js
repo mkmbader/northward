@@ -21,9 +21,9 @@ async function testSync() {
 }
 
 /* ---------- GitHub automatic upload ---------- */
-const SYNC_FILE = 'lift-log.json', SYNC_DELAY = 30e3;
+const SYNC_FILE = 'lift-log.json';
 const syncReady = () => !!(SY.repo && SY.token);
-let syncTimer = null, syncing = false, syncAgain = false, changes = 0;
+let syncing = false, syncAgain = false, changes = 0;
 
 // JSON with two-space indent, but each set on one line
 function toJSON(data) {
@@ -40,12 +40,10 @@ function commitMsg() {
   return `Backup ${today()} ${new Date().toTimeString().slice(0, 5)} · ${n(S.sessions.length, 'workout')}, ${n(S.hikes.length, 'hike')}`;
 }
 
-// called by save(): remember there are changes and upload after SYNC_DELAY of quiet
-function markDirty() {
+// called by explicit actions (Log, Mark done, Save hike): upload now, or retry later if offline
+function requestSync() {
   if (!syncReady()) return;
-  changes++;
-  if (!SY.dirty) { SY.dirty = true; saveSync(); refreshSyncUI(); }
-  clearTimeout(syncTimer); syncTimer = setTimeout(syncNow, SYNC_DELAY);
+  changes++; SY.dirty = true; saveSync(); syncNow();
 }
 async function remoteSha() {
   const r = await gh('/contents/' + SYNC_FILE);
@@ -69,7 +67,6 @@ async function upload(force) {
   return 'ok';
 }
 async function syncNow(force = false) {
-  clearTimeout(syncTimer);
   if (!syncReady() || !(SY.dirty || force)) return;
   if (syncing) { syncAgain = true; return; }
   syncing = true; syncAgain = false;
@@ -96,7 +93,7 @@ function since(ms) {
 function syncStatus() {
   if (!syncReady()) return '';
   if (SY.err) return '⚠️ ' + (SYNC_ERR[SY.err] || `GitHub error ${SY.err}. Will retry`) + ' · failing for ' + since(SY.failSince);
-  if (SY.dirty) return '⏳ Changes waiting to upload';
+  if (SY.dirty) return '⏳ Logged, waiting to upload';
   if (!SY.lastSync) return '';
   return '✅ Backed up ' + (Date.now() - SY.lastSync < 6e4 ? 'just now' : since(SY.lastSync) + ' ago');
 }

@@ -11,11 +11,11 @@ const ACT = {
       elev: parseInt($('#h-elev').value) || 0, note: $('#h-note').value.trim() };
     if (ui.hike === 'new') S.hikes.push({ id: uid(), ...data });
     else Object.assign(S.hikes.find(x => x.id === ui.hike), data);
-    ui.hike = null; ui.cal = data.date.slice(0, 7); save(); render(); scrollTo(0, 0); toast('Hike saved');
+    ui.hike = null; ui.cal = data.date.slice(0, 7); save(); requestSync(); render(); scrollTo(0, 0); toast('Hike saved');
   },
   'hike-del'(b) {
     if (!confirm('Delete this hike?')) return;
-    S.hikes = S.hikes.filter(x => x.id !== b.dataset.id); ui.hike = null; save(); render(); toast('Hike deleted');
+    S.hikes = S.hikes.filter(x => x.id !== b.dataset.id); ui.hike = null; save(); requestSync(); render(); toast('Hike deleted');
   },
   'open-day'(b) { ui.dayId = b.dataset.id; ui.date = today(); render(); scrollTo(0, 0); },
   back() { ui.dayId = null; render(); scrollTo(0, 0); },
@@ -25,16 +25,20 @@ const ACT = {
     const v = num(vIn.value), kg = kIn ? num(kIn.value) : NaN;
     if (!(v > 0)) { toast('Enter ' + (UNIT[e.unit] || UNIT.reps).short + ' first'); vIn.focus(); return; }
     const en = entryFor(ensureSession(d, ui.date), e); en.name = e.name; en.unit = e.unit;
-    en.sets.push(kg > 0 ? { v, kg } : { v });
+    en.sets.push(kg > 0 ? { v, kg } : { v }); en.logged = false;
     save(); refreshCard(e);
   },
   'del-set'(b) {
     const s = getSession(ui.dayId, ui.date), e = curEx(b.dataset.ex);
-    if (s && s.entries[e.id]) { s.entries[e.id].sets.splice(+b.dataset.i, 1); save(); refreshCard(e); }
+    if (s && s.entries[e.id]) { s.entries[e.id].sets.splice(+b.dataset.i, 1); s.entries[e.id].logged = false; save(); refreshCard(e); }
   },
   'toggle-done'(b) {
     const e = curEx(b.dataset.ex), en = entryFor(ensureSession(dayById(ui.dayId), ui.date), e);
-    en.done = !en.done; save(); refreshCard(e);
+    en.done = !en.done; en.logged = en.done; save(); requestSync(); refreshCard(e);
+  },
+  log(b) {
+    const e = curEx(b.dataset.ex), en = entryFor(ensureSession(dayById(ui.dayId), ui.date), e);
+    en.logged = true; save(); requestSync(); refreshCard(e); toast('Logged');
   },
   metric(b) { ui.metric = b.dataset.m; render(); },
   'cal-move'(b) { ui.cal = shiftMonth(ui.cal, +b.dataset.n); render(); },
@@ -98,7 +102,7 @@ const ACT = {
     if (repo !== SY.repo) SY.sha = null;
     SY.repo = repo; if (tok) SY.token = tok; SY.err = null; SY.failSince = null; saveSync(); render();
     msg('Testing…'); const m = await testSync(); msg(m);
-    if (m.startsWith('✅')) { SY.dirty = true; syncNow(); }
+    if (m.startsWith('✅')) requestSync();
   },
   async 'sync-now'() {
     if (SY.err === 'exists' && !confirm("GitHub already has a backup this phone didn't make. Overwrite it with the data on this phone? Older versions stay in the repo history.")) return;
@@ -126,7 +130,7 @@ document.addEventListener('input', ev => {
   if (t.matches('textarea.note')) {
     grow(t);
     const e = curEx(t.dataset.ex), en = entryFor(ensureSession(dayById(ui.dayId), ui.date), e);
-    en.name = e.name; en.unit = e.unit; en.note = t.value; save();
+    en.name = e.name; en.unit = e.unit; en.note = t.value; en.logged = false; save(); refreshLog(e);
   }
 });
 document.addEventListener('change', ev => {
@@ -156,8 +160,7 @@ document.addEventListener('keydown', ev => {
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 render();
 $('#testbadge').hidden = IS_PROD;
-// GitHub backup: upload when leaving the app, when back online, and anything left over from last time
-document.addEventListener('visibilitychange', () => { if (document.hidden) syncNow(); });
+// GitHub backup: retry a Log that couldn't upload, when back online or on the next start
 addEventListener('online', () => syncNow());
 syncNow();
 // ask the browser not to evict localStorage under storage pressure

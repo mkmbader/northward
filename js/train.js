@@ -58,7 +58,7 @@ function workoutView() {
     <h1>${esc(d.name)}</h1>
     ${ui.date !== today() ? `<p class="sub">Logging for ${fmtDate(ui.date, true)}</p>` : ''}
     ${groups.map(g => `<h2>${esc(g.name || 'Exercises')}</h2>` + g.items.map(e => `<div class="card" id="c-${e.id}">${cardInner(d, e)}</div>`).join('')).join('')}
-    ${d.exercises.length ? '<p class="hint">Everything saves automatically on this phone.</p>' : '<div class="empty">This day has no exercises — add some in Setup.</div>'}`;
+    ${d.exercises.length ? `<p class="hint">Everything saves automatically on this phone.${syncReady() ? ' Tap Log to back up an exercise to GitHub.' : ''}</p>` : '<div class="empty">This day has no exercises — add some in Setup.</div>'}`;
 }
 
 function cardInner(d, e) {
@@ -81,7 +81,17 @@ function cardInner(d, e) {
       <button class="addbtn" data-act="add-set" data-ex="${e.id}">+ Set ${sets.length + 1}</button></div>`;
   }
   h += `<textarea class="note" data-ex="${e.id}" rows="1" placeholder="Notes…">${esc(note)}</textarea>`;
-  return h;
+  return h + logBar(e, en);
+}
+function logBar(e, en) {
+  if (!en || !(en.sets.length || en.note || en.done)) return '';
+  return `<div class="logbar"><button class="check ${en.logged ? 'on' : ''}" data-act="log" data-ex="${e.id}">${en.logged ? '✓ Logged' : 'Log'}</button></div>`;
+}
+// update only the Log button, so typing in the note keeps focus
+function refreshLog(e) {
+  const c = $('#c-' + e.id); if (!c) return;
+  const s = getSession(ui.dayId, ui.date), html = logBar(e, s && s.entries[e.id]), bar = c.querySelector('.logbar');
+  if (bar) bar.outerHTML = html; else c.insertAdjacentHTML('beforeend', html);
 }
 function refreshCard(e) { const c = $('#c-' + e.id); if (c) { c.innerHTML = cardInner(dayById(ui.dayId), e); c.querySelectorAll('textarea.note').forEach(grow); } }
 const curEx = id => dayById(ui.dayId).exercises.find(x => x.id === id);

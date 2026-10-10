@@ -19,11 +19,15 @@ function lastFor(name, date, cur) {
   }
   return best;
 }
+// one point per date: the same exercise logged in two workouts on one date is merged
 function seriesFor(name) {
-  const n = norm(name), out = [];
-  for (const s of S.sessions) for (const en of Object.values(s.entries))
-    if (norm(en.name) === n && en.sets.length) out.push({ date: s.date, en });
-  return out.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  const n = norm(name), byDate = {};
+  for (const s of S.sessions) for (const en of Object.values(s.entries)) {
+    if (norm(en.name) !== n || !en.sets.length) continue;
+    const p = byDate[s.date];
+    byDate[s.date] = p ? { date: s.date, en: { ...p.en, sets: p.en.sets.concat(en.sets), note: [p.en.note, en.note].filter(Boolean).join(' · ') } } : { date: s.date, en };
+  }
+  return Object.values(byDate).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 }
 function compact(st, unit) {
   const base = unit === 'sec' ? st.v + 's' : unit === 'm' ? st.v + 'm' : String(st.v);

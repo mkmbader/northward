@@ -10,7 +10,7 @@ function setupView() {
   </div>`).join('')}
   <button class="btn wide" data-act="day-add">+ Add a day</button>
   <h2>Your data</h2>
-  <div class="card"><p class="small" style="margin-top:0">${syncReady() ? 'Logs are backed up to GitHub automatically (see below). You can still save a copy yourself. Last manual backup' : 'Logs live only on this phone. Save a backup regularly (e.g. to iCloud Drive). Last backup'}: <b>${S.lastBackup ? fmtDate(S.lastBackup) : 'never'}</b>.</p>
+  <div class="card"><p class="small" style="margin-top:0">${syncReady() ? 'Logged exercises and saved hikes are backed up to GitHub (see below). You can still save a copy yourself. Last manual backup' : 'Logs live only on this phone. Save a backup regularly (e.g. to iCloud Drive). Last backup'}: <b>${S.lastBackup ? fmtDate(S.lastBackup) : 'never'}</b>.</p>
     <button class="btn wide" data-act="backup">💾 Back up (JSON — restorable)</button>
     <button class="btn wide" data-act="restore">↩︎ Restore from backup</button>
     <button class="btn wide" data-act="csv">📄 Export CSV (for spreadsheets)</button>
