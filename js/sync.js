@@ -98,6 +98,19 @@ function syncStatus() {
   return '✅ Backed up ' + (Date.now() - SY.lastSync < 6e4 ? 'just now' : since(SY.lastSync) + ' ago');
 }
 const syncFailing = () => syncReady() && SY.err && Date.now() - SY.failSince > 864e5;
+/* ---------- GitHub restore ---------- */
+// latest backup: its data, file version and the time of the last commit
+async function fetchBackup() {
+  const sha = await remoteSha();
+  if (!sha) throw 'missing';
+  const r = await gh('/git/blobs/' + sha, { headers: { Accept: 'application/vnd.github.raw+json' } });
+  if (!r.ok) throw r.status;
+  let data = null;
+  try { data = asBackup(JSON.parse(await r.text())); } catch (e) {}
+  if (!data) throw 'invalid';
+  const c = await gh(`/commits?path=${SYNC_FILE}&per_page=1`).then(r => r.ok ? r.json() : []).catch(() => []);
+  return { data, sha, date: c[0] && c[0].commit.committer.date };
+}
 function refreshSyncUI() {
   const el = $('#sy-status'); if (!el) return;
   el.textContent = syncStatus(); el.hidden = !el.textContent;

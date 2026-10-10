@@ -104,6 +104,23 @@ const ACT = {
     msg('Testing…'); const m = await testSync(); msg(m);
     if (m.startsWith('✅')) requestSync();
   },
+  async 'sync-restore'() {
+    const msg = m => { const el = $('#sy-msg'); if (el) el.textContent = m; };
+    msg('Loading backup…');
+    let b;
+    try { b = await fetchBackup(); }
+    catch (e) { return msg(e === 'missing' ? 'No backup found on GitHub. Check the repo name, or log something first.'
+      : e === 'invalid' ? 'That is not a valid Lift Log backup.'
+      : typeof e === 'number' ? '⚠️ ' + (SYNC_ERR[e] || 'GitHub error ' + e) : '⚠️ No connection. Are you online?'); }
+    const when = b.date ? ' from ' + new Date(b.date).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+    const n = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+    if (!confirm(`Restore the GitHub backup${when}?\n${n(b.data.sessions.length, 'workout')}, ${n(b.data.hikes.length, 'hike')}.\n\n`
+      + (SY.dirty ? "⚠️ This phone has logged changes that aren't on GitHub yet. They will be lost.\n\n" : '')
+      + 'This replaces everything on this phone.')) return msg('');
+    S = b.data; save();
+    Object.assign(SY, { sha: b.sha, dirty: false, err: null, failSince: null, lastSync: b.date ? Date.parse(b.date) : Date.now() }); saveSync();
+    ui.dayId = null; render(); toast('Backup restored');
+  },
   async 'sync-now'() {
     if (SY.err === 'exists' && !confirm("GitHub already has a backup this phone didn't make. Overwrite it with the data on this phone? Older versions stay in the repo history.")) return;
     toast('Backing up…'); await syncNow(true);
@@ -142,9 +159,8 @@ document.addEventListener('change', ev => {
     const r = new FileReader();
     r.onload = () => {
       try {
-        const data = JSON.parse(r.result);
-        if (!Array.isArray(data.days) || !Array.isArray(data.sessions)) throw 0;
-        data.hikes = data.hikes || [];
+        const data = asBackup(JSON.parse(r.result));
+        if (!data) throw 0;
         if (!confirm(`Restore backup with ${data.sessions.length} workouts? This replaces what is on this phone now.`)) return;
         S = data; save(); ui.dayId = null; render(); toast('Backup restored');
       } catch (e) { alert('That file is not a valid Lift Log backup.'); }
@@ -157,7 +173,6 @@ document.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && ev.target.closest('.add')) { ev.preventDefault(); ev.target.closest('.add').querySelector('.addbtn').click(); }
 });
 
-if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 render();
 $('#testbadge').hidden = IS_PROD;
 // GitHub backup: retry a Log that couldn't upload, when back online or on the next start
