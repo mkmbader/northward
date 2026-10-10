@@ -1,7 +1,12 @@
 /* ---------- Setup ---------- */
 function setupView() {
   const secs = [...new Set(S.days.flatMap(d => d.exercises.map(e => e.section)).filter(Boolean))];
-  return `<h1>Setup</h1><p class="sub">Change your days as your plan evolves. Tap an exercise to edit it. Past logs are always kept.</p>
+  return `<h1>Setup</h1>
+  <h2>You</h2>
+  <div class="card"><label class="fl">Name<input id="p-name" value="${esc(S.profile.name)}" autocomplete="given-name"></label>
+    <div class="fl">Theme</div>${themePicker()}
+    <p class="small" style="margin-bottom:0">Day and dusk switch at sunset in Amsterdam. The home-screen icon follows the theme you have when you add the app.</p></div>
+  <h2>Your days</h2><p class="sub">Change your days as your plan evolves. Tap an exercise to edit it. Past logs are always kept.</p>
   <datalist id="secs">${secs.map(s => `<option value="${esc(s)}">`).join('')}</datalist>
   ${S.days.map(d => `<div class="card">
     <input class="dayname" data-day="${d.id}" value="${esc(d.name)}" aria-label="Day name">
@@ -16,6 +21,18 @@ function setupView() {
     <button class="btn wide" data-act="csv">📄 Export CSV (for spreadsheets)</button>
     <button class="btn wide danger" data-act="reset-prog">Reset days to original plan (keeps logs)</button></div>
   ${syncCard()}`;
+}
+/* ---------- first start ---------- */
+function welcomeView() {
+  return `${hero()}
+  <h2>Velkommen</h2>
+  <div class="card"><p style="margin-top:0">Northward gets you ready for the mountains. What should it call you?</p>
+    <label class="fl" style="margin-bottom:0">Your name<input id="w-name" value="${esc(ui.wName || '')}" autocomplete="given-name"></label></div>
+  <h2>Pick your landscape</h2>${themePicker()}
+  <p class="small">You can change this any time in Setup.</p>
+  ${syncCard()}
+  <p class="small">The GitHub backup is optional and can be set up later in Setup. On a new phone, connect it here and restore your logs.</p>
+  <button class="btn primary wide go" data-act="welcome-done">Kom i gang ›</button>`;
 }
 function syncCard() {
   const hint = SY.token ? `Saved ••••${esc(SY.token.slice(-4))}. Paste to replace` : 'github_pat_…';

@@ -1,4 +1,4 @@
-# Lift Log
+# Northward
 
 A workout and hike log that runs in the browser and is installed on the phone's home screen. Production: https://mkmbader.github.io/northward/ (deployed by GitHub Pages from `main`).
 
@@ -40,10 +40,12 @@ js/seed.js        default training plan
 js/storage.js     load/save of workout data (localStorage)
 js/sync.js        GitHub backup settings and API calls
 js/model.js       data model helpers + UI state
+js/theme.js       themes, day/dusk (Amsterdam sunset), landscapes, Norwegian greetings + sayings
 js/train.js       Train + Hikes screens
 js/progress.js    Progress screen + charts
 js/history.js     History screen
-js/setup.js       Setup screen, backup card, export/import
+js/setup.js       Setup screen, welcome screen, backup card, export/import
+js/celebrate.js   workout-complete and hike celebrations
 js/actions.js     button/input handlers + startup
 ```
 

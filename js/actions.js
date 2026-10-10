@@ -11,7 +11,9 @@ const ACT = {
       elev: parseInt($('#h-elev').value) || 0, note: $('#h-note').value.trim() };
     if (ui.hike === 'new') S.hikes.push({ id: uid(), ...data });
     else Object.assign(S.hikes.find(x => x.id === ui.hike), data);
-    ui.hike = null; ui.cal = data.date.slice(0, 7); save(); requestSync(); render(); scrollTo(0, 0); toast('Hike saved');
+    const isNew = ui.hike === 'new';
+    ui.hike = null; ui.cal = data.date.slice(0, 7); save(); requestSync(); render(); scrollTo(0, 0);
+    if (isNew) celebrate('hike', data); else toast('Hike saved');
   },
   'hike-del'(b) {
     if (!confirm('Delete this hike?')) return;
@@ -33,12 +35,21 @@ const ACT = {
     if (s && s.entries[e.id]) { s.entries[e.id].sets.splice(+b.dataset.i, 1); s.entries[e.id].logged = false; save(); refreshCard(e); }
   },
   'toggle-done'(b) {
-    const e = curEx(b.dataset.ex), en = entryFor(ensureSession(dayById(ui.dayId), ui.date), e);
+    const e = curEx(b.dataset.ex), s = ensureSession(dayById(ui.dayId), ui.date), en = entryFor(s, e);
     en.done = !en.done; en.logged = en.done; save(); requestSync(); refreshCard(e);
+    if (en.done) checkComplete(s);
   },
   log(b) {
-    const e = curEx(b.dataset.ex), en = entryFor(ensureSession(dayById(ui.dayId), ui.date), e);
+    const e = curEx(b.dataset.ex), s = ensureSession(dayById(ui.dayId), ui.date), en = entryFor(s, e);
     en.logged = true; save(); requestSync(); refreshCard(e); toast('Logged');
+    checkComplete(s);
+  },
+  'cel-close'(b) { b.closest('.cel').remove(); },
+  'theme-pick'(b) { S.profile.theme = b.dataset.theme; save(); render(); },
+  'welcome-done'() {
+    const name = $('#w-name').value.trim();
+    if (!name) { toast('Enter your name'); $('#w-name').focus(); return; }
+    S.profile.name = name; ui.wName = null; save(); requestSync(); render(); scrollTo(0, 0);
   },
   metric(b) { ui.metric = b.dataset.m; render(); },
   'cal-move'(b) { ui.cal = shiftMonth(ui.cal, +b.dataset.n); render(); },
@@ -143,6 +154,7 @@ document.addEventListener('click', ev => {
 });
 document.addEventListener('input', ev => {
   const t = ev.target;
+  if (t.id === 'w-name') { ui.wName = t.value; return; }
   if (['h-km', 'h-h', 'h-m'].includes(t.id)) { $('#h-pace').textContent = paceText(num($('#h-km').value), hikeFormMin()); return; }
   if (t.matches('textarea.note')) {
     grow(t);
@@ -154,6 +166,7 @@ document.addEventListener('change', ev => {
   const t = ev.target;
   if (t.id === 'wdate') { ui.date = t.value || today(); render(); }
   else if (t.id === 'progsel') { ui.prog = t.value; ui.metric = null; render(); }
+  else if (t.id === 'p-name') { S.profile.name = t.value.trim() || S.profile.name; t.value = S.profile.name; save(); requestSync(); }
   else if (t.matches('input.dayname')) { const d = dayById(t.dataset.day); d.name = t.value.trim() || d.name; save(); }
   else if (t.id === 'restore' && t.files[0]) {
     const r = new FileReader();
