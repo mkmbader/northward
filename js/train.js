@@ -6,8 +6,7 @@ function dayPicker() {
   if (recent) { const i = S.days.findIndex(d => d.id === recent.dayId); if (i >= 0) nextId = S.days[(i + 1) % S.days.length].id; }
   const daysSinceBackup = S.lastBackup ? Math.round((dateMs(t) - dateMs(S.lastBackup)) / 864e5) : null;
   const needBackup = !syncReady() && S.sessions.length + S.hikes.length >= 2 && (daysSinceBackup === null || daysSinceBackup >= 7);
-  return `<h1>Train</h1>
-  <p class="sub">${new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+  return `${hero()}
   ${syncFailing() ? '<button class="banner" data-act="tab" data-tab="setup">⚠️ <b>GitHub backup not working</b> — check Setup.</button>' : ''}
   ${needBackup ? `<button class="banner" data-act="backup">💾 <b>Back up your logs</b> — ${daysSinceBackup === null ? 'no backup yet' : 'last one ' + daysSinceBackup + ' days ago'}. Tap to save a copy.</button>` : ''}
   ${S.days.length ? S.days.map(d => {

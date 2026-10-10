@@ -38,9 +38,13 @@ function compact(st, unit) {
 const ui = { tab: 'train', dayId: null, date: today(), prog: null, metric: null, editEx: null, cal: today().slice(0, 7) };
 
 function render() {
+  applyTheme();
+  const welcome = !S.profile.name;
+  document.body.classList.toggle('welcome', welcome);
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   const v = $('#view');
-  if (ui.hike) v.innerHTML = hikeView();
+  if (welcome) v.innerHTML = welcomeView();
+  else if (ui.hike) v.innerHTML = hikeView();
   else if (ui.tab === 'train') v.innerHTML = ui.dayId && dayById(ui.dayId) ? workoutView() : (ui.dayId = null, dayPicker());
   else if (ui.tab === 'progress') v.innerHTML = progressView();
   else if (ui.tab === 'history') v.innerHTML = historyView();

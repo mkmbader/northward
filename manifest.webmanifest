@@ -1,13 +1,13 @@
 {
-  "name": "Lift Log",
-  "short_name": "Lift Log",
+  "name": "Northward",
+  "short_name": "Northward",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0f1012",
-  "theme_color": "#0f1012",
+  "background_color": "#EEF2F0",
+  "theme_color": "#DCE8EC",
   "icons": [
-    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icons/fjord-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/fjord-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
