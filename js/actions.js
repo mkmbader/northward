@@ -87,7 +87,7 @@ const ACT = {
     S.days = S.days.filter(x => x.id !== d.id); save(); render();
   },
   async backup() {
-    const ok = await shareFile(`lift-log-backup-${today()}.json`, JSON.stringify(S), 'application/json');
+    const ok = await shareFile(`lift-log-backup-${today()}.json`, toJSON(S), 'application/json');
     if (ok) { S.lastBackup = today(); save(); render(); toast('Backup created'); }
   },
   restore() { $('#restore').click(); },
@@ -95,8 +95,15 @@ const ACT = {
     const repo = $('#sy-repo').value.trim(), tok = $('#sy-token').value.trim();
     const msg = m => { const el = $('#sy-msg'); if (el) el.textContent = m; };
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !(tok || SY.token)) return msg('Enter a repository (owner/repo-name) and paste a token first');
-    SY.repo = repo; if (tok) SY.token = tok; saveSync(); render();
-    msg('Testing…'); msg(await testSync());
+    if (repo !== SY.repo) SY.sha = null;
+    SY.repo = repo; if (tok) SY.token = tok; SY.err = null; SY.failSince = null; saveSync(); render();
+    msg('Testing…'); const m = await testSync(); msg(m);
+    if (m.startsWith('✅')) { SY.dirty = true; syncNow(); }
+  },
+  async 'sync-now'() {
+    if (SY.err === 'exists' && !confirm("GitHub already has a backup this phone didn't make. Overwrite it with the data on this phone? Older versions stay in the repo history.")) return;
+    toast('Backing up…'); await syncNow(true);
+    toast(SY.err ? '⚠️ Backup failed' : SY.dirty ? 'Offline: will retry' : 'Backed up to GitHub');
   },
   'sync-clear'() {
     if (!confirm('Remove the GitHub token from this phone?')) return;
@@ -149,5 +156,9 @@ document.addEventListener('keydown', ev => {
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 render();
 $('#testbadge').hidden = IS_PROD;
+// GitHub backup: upload when leaving the app, when back online, and anything left over from last time
+document.addEventListener('visibilitychange', () => { if (document.hidden) syncNow(); });
+addEventListener('online', () => syncNow());
+syncNow();
 // ask the browser not to evict localStorage under storage pressure
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});

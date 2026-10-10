@@ -10,7 +10,7 @@ function setupView() {
   </div>`).join('')}
   <button class="btn wide" data-act="day-add">+ Add a day</button>
   <h2>Your data</h2>
-  <div class="card"><p class="small" style="margin-top:0">Logs live only on this phone. Save a backup regularly (e.g. to iCloud Drive). Last backup: <b>${S.lastBackup ? fmtDate(S.lastBackup) : 'never'}</b>.</p>
+  <div class="card"><p class="small" style="margin-top:0">${syncReady() ? 'Logs are backed up to GitHub automatically (see below). You can still save a copy yourself. Last manual backup' : 'Logs live only on this phone. Save a backup regularly (e.g. to iCloud Drive). Last backup'}: <b>${S.lastBackup ? fmtDate(S.lastBackup) : 'never'}</b>.</p>
     <button class="btn wide" data-act="backup">💾 Back up (JSON — restorable)</button>
     <button class="btn wide" data-act="restore">↩︎ Restore from backup</button>
     <button class="btn wide" data-act="csv">📄 Export CSV (for spreadsheets)</button>
@@ -21,10 +21,11 @@ function syncCard() {
   const hint = SY.token ? `Saved ••••${esc(SY.token.slice(-4))}. Paste to replace` : 'github_pat_…';
   return `<h2>Backup to GitHub</h2>
   <div class="card">
+    <p class="small" id="sy-status" style="margin-top:0" ${syncStatus() ? '' : 'hidden'}>${syncStatus()}</p>
     <label class="fl">Repository<input id="sy-repo" value="${esc(SY.repo)}" placeholder="owner/repo-name" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
     <label class="fl">Token<input id="sy-token" type="password" placeholder="${hint}" autocomplete="off"></label>
     <p class="small" id="sy-msg"></p>
-    <div class="row" style="margin-top:0"><button class="btn primary" data-act="sync-save">Save &amp; test</button>${SY.token ? '<button class="btn danger" data-act="sync-clear">Remove token</button>' : ''}</div></div>`;
+    <div class="row" style="margin-top:0"><button class="btn primary" data-act="sync-save">Save &amp; test</button>${syncReady() ? '<button class="btn" data-act="sync-now">Back up now</button>' : ''}${SY.token ? '<button class="btn danger" data-act="sync-clear">Remove token</button>' : ''}</div></div>`;
 }
 function exRow(d, e, i) {
   if (ui.editEx === e.id) return `<div class="exedit">

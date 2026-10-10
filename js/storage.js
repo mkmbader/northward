@@ -10,6 +10,6 @@ function clean() {
 }
 function save() {
   clean();
-  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('⚠️ Could not save'); }
+  try { localStorage.setItem(KEY, JSON.stringify(S)); markDirty(); } catch (e) { toast('⚠️ Could not save'); }
 }
 
