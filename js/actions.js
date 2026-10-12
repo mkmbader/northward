@@ -104,11 +104,6 @@ const ACT = {
     if (!confirm(`Delete "${d.name}"? Its past workouts stay in History.`)) return;
     S.days = S.days.filter(x => x.id !== d.id); save(); requestSync(); render();
   },
-  async backup() {
-    const ok = await shareFile(`lift-log-backup-${today()}.json`, toJSON(S), 'application/json');
-    if (ok) { S.lastBackup = today(); save(); render(); toast('Backup created'); }
-  },
-  restore() { $('#restore').click(); },
   async 'sync-save'() {
     const repo = $('#sy-repo').value.trim(), tok = $('#sy-token').value.trim();
     const msg = m => { const el = $('#sy-msg'); if (el) el.textContent = m; };
@@ -147,7 +142,7 @@ const ACT = {
   async csv() { await shareFile(`lift-log-${today()}.csv`, toCSV(), 'text/csv'); },
   'reset-prog'() {
     if (!confirm('Replace your days with the original plan? Your logged workouts are kept.')) return;
-    S.days = seedDays(); save(); render(); toast('Days reset');
+    S.days = seedDays(); save(); requestSync(); render(); toast('Days reset');
   }
 };
 
@@ -171,19 +166,6 @@ document.addEventListener('change', ev => {
   else if (t.id === 'progsel') { ui.prog = t.value; ui.metric = null; render(); }
   else if (t.id === 'p-name') { S.profile.name = t.value.trim() || S.profile.name; t.value = S.profile.name; save(); requestSync(); }
   else if (t.matches('input.dayname')) { const d = dayById(t.dataset.day); d.name = t.value.trim() || d.name; save(); requestSync(); }
-  else if (t.id === 'restore' && t.files[0]) {
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = asBackup(JSON.parse(r.result));
-        if (!data) throw 0;
-        if (!confirm(`Restore backup with ${data.sessions.length} workouts? This replaces what is on this phone now.`)) return;
-        S = data; save(); ui.dayId = null; render(); toast('Backup restored');
-      } catch (e) { alert('That file is not a valid Lift Log backup.'); }
-      t.value = '';
-    };
-    r.readAsText(t.files[0]);
-  }
 });
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && ev.target.closest('.add')) { ev.preventDefault(); ev.target.closest('.add').querySelector('.addbtn').click(); }

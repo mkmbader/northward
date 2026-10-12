@@ -4,11 +4,10 @@ function dayPicker() {
   const recent = [...S.sessions].sort((a, b) => a.date < b.date ? 1 : -1)[0];
   let nextId = S.days[0] && S.days[0].id;
   if (recent) { const i = S.days.findIndex(d => d.id === recent.dayId); if (i >= 0) nextId = S.days[(i + 1) % S.days.length].id; }
-  const daysSinceBackup = S.lastBackup ? Math.round((dateMs(t) - dateMs(S.lastBackup)) / 864e5) : null;
-  const needBackup = !syncReady() && S.sessions.length + S.hikes.length >= 2 && (daysSinceBackup === null || daysSinceBackup >= 7);
+  const needBackup = !syncReady() && S.sessions.length + S.hikes.length >= 2;
   return `${hero()}
   ${syncFailing() ? '<button class="banner" data-act="tab" data-tab="setup">⚠️ <b>GitHub backup not working</b> — check Setup.</button>' : ''}
-  ${needBackup ? `<button class="banner" data-act="backup">💾 <b>Back up your logs</b> — ${daysSinceBackup === null ? 'no backup yet' : 'last one ' + daysSinceBackup + ' days ago'}. Tap to save a copy.</button>` : ''}
+  ${needBackup ? '<button class="banner" data-act="tab" data-tab="setup">☁️ <b>Your logs are only on this phone</b> — set up the GitHub backup in Setup.</button>' : ''}
   ${S.days.length ? S.days.map(d => {
     const last = S.sessions.filter(s => s.dayId === d.id).map(s => s.date).sort().pop();
     const meta = last === t ? '<b>In progress today</b>' : last ? 'Last done ' + fmtDate(last) : 'Not done yet';

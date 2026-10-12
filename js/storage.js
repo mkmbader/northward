@@ -2,7 +2,7 @@
 const newProfile = () => ({ name: '', theme: 'fjord' });
 function load() {
   try { const r = localStorage.getItem(KEY); if (r) { const d = JSON.parse(r); if (d && Array.isArray(d.days)) { d.hikes = d.hikes || []; d.profile = d.profile || newProfile(); return d; } } } catch (e) {}
-  return { version: 1, days: seedDays(), sessions: [], hikes: [], lastBackup: null, profile: newProfile() };
+  return { version: 1, days: seedDays(), sessions: [], hikes: [], profile: newProfile() };
 }
 let S = load();
 // a parsed backup file, or null if it isn't one
