@@ -40,7 +40,7 @@ function commitMsg() {
   return `Backup ${today()} ${new Date().toTimeString().slice(0, 5)} · ${n(S.sessions.length, 'workout')}, ${n(S.hikes.length, 'hike')}`;
 }
 
-// called by explicit actions (Log, Mark done, Save hike): upload now, or retry later if offline
+// called by explicit actions (Log, Mark done, Save hike, plan edits in Setup): upload now, or retry later if offline
 function requestSync() {
   if (!syncReady()) return;
   changes++; SY.dirty = true; saveSync(); syncNow();
@@ -93,7 +93,7 @@ function since(ms) {
 function syncStatus() {
   if (!syncReady()) return '';
   if (SY.err) return '⚠️ ' + (SYNC_ERR[SY.err] || `GitHub error ${SY.err}. Will retry`) + ' · failing for ' + since(SY.failSince);
-  if (SY.dirty) return '⏳ Logged, waiting to upload';
+  if (SY.dirty) return '⏳ Changes waiting to upload';
   if (!SY.lastSync) return '';
   return '✅ Backed up ' + (Date.now() - SY.lastSync < 6e4 ? 'just now' : since(SY.lastSync) + ' ago');
 }
