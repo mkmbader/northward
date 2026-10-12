@@ -14,13 +14,11 @@ function setupView() {
     <div class="row"><button class="btn" data-act="ex-add" data-day="${d.id}">+ Exercise</button><button class="btn danger" data-act="day-del" data-day="${d.id}">Delete day</button></div>
   </div>`).join('')}
   <button class="btn wide" data-act="day-add">+ Add a day</button>
-  <h2>Your data</h2>
-  <div class="card"><p class="small" style="margin-top:0">${syncReady() ? 'Logged exercises and saved hikes are backed up to GitHub (see below). You can still save a copy yourself. Last manual backup' : 'Logs live only on this phone. Save a backup regularly (e.g. to iCloud Drive). Last backup'}: <b>${S.lastBackup ? fmtDate(S.lastBackup) : 'never'}</b>.</p>
-    <button class="btn wide" data-act="backup">💾 Back up (JSON — restorable)</button>
-    <button class="btn wide" data-act="restore">↩︎ Restore from backup</button>
+  ${syncCard()}
+  <h2>Tools</h2>
+  <div class="card">
     <button class="btn wide" data-act="csv">📄 Export CSV (for spreadsheets)</button>
-    <button class="btn wide danger" data-act="reset-prog">Reset days to original plan (keeps logs)</button></div>
-  ${syncCard()}`;
+    <button class="btn wide danger" data-act="reset-prog">Reset days to original plan (keeps logs)</button></div>`;
 }
 /* ---------- first start ---------- */
 function welcomeView() {

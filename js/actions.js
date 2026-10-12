@@ -61,17 +61,17 @@ const ACT = {
   'open-session'(b) { const s = S.sessions.find(x => x.id === b.dataset.id); ui.tab = 'train'; ui.dayId = s.dayId; ui.date = s.date; render(); scrollTo(0, 0); },
   'del-session'(b) {
     if (!confirm('Delete this workout? This cannot be undone.')) return;
-    S.sessions = S.sessions.filter(x => x.id !== b.dataset.id); save(); render(); toast('Workout deleted');
+    S.sessions = S.sessions.filter(x => x.id !== b.dataset.id); save(); requestSync(); render(); toast('Workout deleted');
   },
   'ex-edit'(b) { ui.editEx = b.dataset.ex; render(); },
   'ex-cancel'() { ui.editEx = null; render(); },
   'ex-move'(b) {
     const d = dayById(b.dataset.day), i = +b.dataset.i, j = i + +b.dataset.dir;
-    [d.exercises[i], d.exercises[j]] = [d.exercises[j], d.exercises[i]]; save(); render();
+    [d.exercises[i], d.exercises[j]] = [d.exercises[j], d.exercises[i]]; save(); requestSync(); render();
   },
   'ex-add'(b) {
     const d = dayById(b.dataset.day), sec = d.exercises.length ? d.exercises[d.exercises.length - 1].section : 'Exercises';
-    const e = ex('New exercise', sec, ''); d.exercises.push(e); ui.editEx = e.id; save(); render();
+    const e = ex('New exercise', sec, ''); d.exercises.push(e); ui.editEx = e.id; save(); requestSync(); render();
     const n = $('.exedit .f-name'); if (n) { n.focus(); n.select(); }
   },
   'ex-save'(b) {
@@ -88,24 +88,22 @@ const ACT = {
     e.unit = box.querySelector('.f-unit').value;
     e.weighted = box.querySelector('.f-w').checked;
     e.perSide = box.querySelector('.f-ps').checked;
-    ui.editEx = null; save(); render(); toast('Saved');
+    ui.editEx = null; save(); requestSync(); render(); toast('Saved');
   },
   'ex-del'(b) {
     const d = dayById(b.dataset.day), e = d.exercises.find(x => x.id === b.dataset.ex);
     if (!confirm(`Remove "${e.name}" from ${d.name}? Past logs are kept.`)) return;
-    d.exercises = d.exercises.filter(x => x.id !== e.id); ui.editEx = null; save(); render();
+    d.exercises = d.exercises.filter(x => x.id !== e.id); ui.editEx = null; save(); requestSync(); render();
   },
-  'day-add'() { S.days.push({ id: uid(), name: 'Day ' + String.fromCharCode(65 + S.days.length), exercises: [] }); save(); render(); },
+  'day-add'() {
+    const d = { id: uid(), name: 'New day', exercises: [] }; S.days.push(d); save(); requestSync(); render();
+    const n = $(`input.dayname[data-day="${d.id}"]`); if (n) { n.focus(); n.select(); }
+  },
   'day-del'(b) {
     const d = dayById(b.dataset.day);
     if (!confirm(`Delete "${d.name}"? Its past workouts stay in History.`)) return;
-    S.days = S.days.filter(x => x.id !== d.id); save(); render();
+    S.days = S.days.filter(x => x.id !== d.id); save(); requestSync(); render();
   },
-  async backup() {
-    const ok = await shareFile(`lift-log-backup-${today()}.json`, toJSON(S), 'application/json');
-    if (ok) { S.lastBackup = today(); save(); render(); toast('Backup created'); }
-  },
-  restore() { $('#restore').click(); },
   async 'sync-save'() {
     const repo = $('#sy-repo').value.trim(), tok = $('#sy-token').value.trim();
     const msg = m => { const el = $('#sy-msg'); if (el) el.textContent = m; };
@@ -144,7 +142,7 @@ const ACT = {
   async csv() { await shareFile(`lift-log-${today()}.csv`, toCSV(), 'text/csv'); },
   'reset-prog'() {
     if (!confirm('Replace your days with the original plan? Your logged workouts are kept.')) return;
-    S.days = seedDays(); save(); render(); toast('Days reset');
+    S.days = seedDays(); save(); requestSync(); render(); toast('Days reset');
   }
 };
 
@@ -167,20 +165,7 @@ document.addEventListener('change', ev => {
   if (t.id === 'wdate') { ui.date = t.value || today(); render(); }
   else if (t.id === 'progsel') { ui.prog = t.value; ui.metric = null; render(); }
   else if (t.id === 'p-name') { S.profile.name = t.value.trim() || S.profile.name; t.value = S.profile.name; save(); requestSync(); }
-  else if (t.matches('input.dayname')) { const d = dayById(t.dataset.day); d.name = t.value.trim() || d.name; save(); }
-  else if (t.id === 'restore' && t.files[0]) {
-    const r = new FileReader();
-    r.onload = () => {
-      try {
-        const data = asBackup(JSON.parse(r.result));
-        if (!data) throw 0;
-        if (!confirm(`Restore backup with ${data.sessions.length} workouts? This replaces what is on this phone now.`)) return;
-        S = data; save(); ui.dayId = null; render(); toast('Backup restored');
-      } catch (e) { alert('That file is not a valid Lift Log backup.'); }
-      t.value = '';
-    };
-    r.readAsText(t.files[0]);
-  }
+  else if (t.matches('input.dayname')) { const d = dayById(t.dataset.day); d.name = t.value.trim() || d.name; save(); requestSync(); }
 });
 document.addEventListener('keydown', ev => {
   if (ev.key === 'Enter' && ev.target.closest('.add')) { ev.preventDefault(); ev.target.closest('.add').querySelector('.addbtn').click(); }

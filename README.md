@@ -24,7 +24,7 @@ A red **TEST** badge in the top-right corner means you are not on production. Op
 
 - **Storage:** the browser keeps data per address. `localhost:8000` and `192.168.x.x:8000` each have their own storage and can't read the data in the home-screen app.
 - **GitHub backup:** in Setup → Backup to GitHub, enter the test repo (`mkmbader/northward-data-test`), not the real one.
-- **Realistic data:** in the production app, tap **Back up**, move the file to the laptop, and use **Restore from backup** in the local copy.
+- **Realistic data:** copy `lift-log.json` from the real data repo into the test repo, then use **Restore from GitHub** in the local copy. Never connect the local copy to the real repo: it would upload its own data there.
 
 ### If a change doesn't show up
 
