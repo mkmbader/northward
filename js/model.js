@@ -19,6 +19,16 @@ function lastFor(name, date, cur) {
   }
   return best;
 }
+// most recent earlier note for this exercise, skipping entries without one
+function lastNoteFor(name, date, cur) {
+  const n = norm(name); let best = null;
+  for (const s of S.sessions) {
+    if (s === cur || s.date > date) continue;
+    for (const en of Object.values(s.entries))
+      if (norm(en.name) === n && en.note && en.note.trim() && (!best || s.date > best.date)) best = { date: s.date, note: en.note.trim() };
+  }
+  return best && best.note;
+}
 // one point per date: the same exercise logged in two workouts on one date is merged
 function seriesFor(name) {
   const n = norm(name), byDate = {};
@@ -51,7 +61,8 @@ function render() {
   else v.innerHTML = setupView();
   document.querySelectorAll('textarea.note').forEach(grow);
 }
-function grow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+// when empty, size to the placeholder so a long previous note isn't cut off
+function grow(el) { const v = el.value; el.style.height = 'auto'; if (!v) el.value = el.placeholder; el.style.height = el.scrollHeight + 'px'; el.value = v; }
 let tt;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
 

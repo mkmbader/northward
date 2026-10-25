@@ -78,7 +78,8 @@ function cardInner(d, e) {
       ${e.weighted ? `<label><input class="in-kg" inputmode="decimal" placeholder="BW" value="${pf && pf.kg ? pf.kg : ''}" aria-label="Weight in kg"><span>kg</span></label>` : ''}
       <button class="addbtn" data-act="add-set" data-ex="${e.id}">+ Set ${sets.length + 1}</button></div>`;
   }
-  h += `<textarea class="note" data-ex="${e.id}" rows="1" placeholder="Notes…">${esc(note)}</textarea>`;
+  const prevNote = lastNoteFor(e.name, ui.date, s);
+  h += `<textarea class="note" data-ex="${e.id}" rows="1" placeholder="${prevNote ? 'Last: ' + esc(prevNote) : 'Notes…'}">${esc(note)}</textarea>`;
   return h + logBar(e, en);
 }
 function logBar(e, en) {
