@@ -10,6 +10,18 @@ function entryFor(s, e) {
   if (!s.entries[e.id]) s.entries[e.id] = { name: e.name, unit: e.unit, sets: [], note: '', done: false };
   return s.entries[e.id];
 }
+const findEx = id => { for (const d of S.days) { const e = d.exercises.find(x => x.id === id); if (e) return e; } };
+// exercises from other days added to this one workout: logged ones live in the session's entries,
+// ones not logged yet only in ui.extra (gone after a reload, like any empty entry)
+function extrasFor(d, s) {
+  const key = d.id + '|' + ui.date, own = new Set(d.exercises.map(e => e.id));
+  const ids = [...new Set([...(s ? Object.keys(s.entries) : []), ...(ui.extra[key] || [])])].filter(id => !own.has(id));
+  return ids.map(id => {
+    const en = s && s.entries[id];
+    return findEx(id) || (en && { id, name: en.name, unit: en.unit, section: '', target: '', weighted: en.sets.some(st => st.kg), perSide: false });
+  }).filter(Boolean);
+}
+const workoutExs = () => { const d = dayById(ui.dayId); return d.exercises.concat(extrasFor(d, getSession(d.id, ui.date))); };
 function lastFor(name, date, cur) {
   const n = norm(name); let best = null;
   for (const s of S.sessions) {
@@ -18,6 +30,16 @@ function lastFor(name, date, cur) {
       if (norm(en.name) === n && en.sets.length && (!best || s.date > best.date)) best = { date: s.date, entry: en };
   }
   return best;
+}
+// most recent earlier note for this exercise, skipping entries without one
+function lastNoteFor(name, date, cur) {
+  const n = norm(name); let best = null;
+  for (const s of S.sessions) {
+    if (s === cur || s.date > date) continue;
+    for (const en of Object.values(s.entries))
+      if (norm(en.name) === n && en.note && en.note.trim() && (!best || s.date > best.date)) best = { date: s.date, note: en.note.trim() };
+  }
+  return best && best.note;
 }
 // one point per date: the same exercise logged in two workouts on one date is merged
 function seriesFor(name) {
@@ -35,7 +57,7 @@ function compact(st, unit) {
 }
 
 /* ---------- ui state ---------- */
-const ui = { tab: 'train', dayId: null, date: today(), prog: null, metric: null, editEx: null, cal: today().slice(0, 7) };
+const ui = { tab: 'train', dayId: null, date: today(), prog: null, metric: null, editEx: null, cal: today().slice(0, 7), extra: {}, picker: false };
 
 function render() {
   applyTheme();
@@ -51,7 +73,8 @@ function render() {
   else v.innerHTML = setupView();
   document.querySelectorAll('textarea.note').forEach(grow);
 }
-function grow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+// when empty, size to the placeholder so a long previous note isn't cut off
+function grow(el) { const v = el.value; el.style.height = 'auto'; if (!v) el.value = el.placeholder; el.style.height = el.scrollHeight + 'px'; el.value = v; }
 let tt;
 function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800); }
 

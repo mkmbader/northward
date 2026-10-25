@@ -44,6 +44,29 @@ const ACT = {
     en.logged = true; save(); requestSync(); refreshCard(e); toast('Logged');
     checkComplete(s);
   },
+  finish() {
+    const s = getSession(ui.dayId, ui.date), d = dayById(ui.dayId);
+    const ens = s ? Object.values(s.entries).filter(en => en.sets.length || en.note || en.done) : [];
+    if (!ens.length) { toast('Log at least one exercise first'); return; }
+    ens.forEach(en => en.logged = true);
+    s.celebrated = true; save(); requestSync();
+    workoutExs().forEach(refreshCard); refreshFinish(s); celebrate('workout', s);
+  },
+  'pick-open'() { ui.picker = true; render(); },
+  'pick-close'() { ui.picker = false; render(); },
+  'pick-add'(b) {
+    const key = ui.dayId + '|' + ui.date, id = b.dataset.ex;
+    ui.extra[key] = (ui.extra[key] || []).concat(id); ui.picker = false; render();
+    const c = $('#c-' + id); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  },
+  'extra-rm'(b) {
+    const e = curEx(b.dataset.ex), s = getSession(ui.dayId, ui.date), en = s && s.entries[e.id], key = ui.dayId + '|' + ui.date;
+    const has = en && (en.sets.length || en.note || en.done);
+    if (has && !confirm(`Remove "${e.name}" from this workout? What you logged for it is deleted.`)) return;
+    if (en) delete s.entries[e.id];
+    ui.extra[key] = (ui.extra[key] || []).filter(x => x !== e.id);
+    save(); if (has) requestSync(); render();
+  },
   'cel-close'(b) { b.closest('.cel').remove(); },
   'theme-pick'(b) { S.profile.theme = b.dataset.theme; save(); render(); },
   'welcome-done'() {
@@ -168,6 +191,7 @@ document.addEventListener('change', ev => {
   else if (t.matches('input.dayname')) { const d = dayById(t.dataset.day); d.name = t.value.trim() || d.name; save(); requestSync(); }
 });
 document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && ui.picker) { ACT['pick-close'](); return; }
   if (ev.key === 'Enter' && ev.target.closest('.add')) { ev.preventDefault(); ev.target.closest('.add').querySelector('.addbtn').click(); }
 });
 

@@ -51,19 +51,41 @@ function workoutView() {
   const d = dayById(ui.dayId);
   const groups = [];
   d.exercises.forEach(e => { let g = groups.find(g => g.name === e.section); if (!g) groups.push(g = { name: e.section, items: [] }); g.items.push(e); });
+  const s = getSession(d.id, ui.date), extras = extrasFor(d, s);
+  if (extras.length) groups.push({ name: ui.date === today() ? 'Added today' : 'Added', items: extras });
   return `<div class="bar"><button class="back" data-act="back">‹ Days</button>
     <input type="date" id="wdate" value="${ui.date}" max="${today()}"></div>
     <h1>${esc(d.name)}</h1>
     ${ui.date !== today() ? `<p class="sub">Logging for ${fmtDate(ui.date, true)}</p>` : ''}
     ${groups.map(g => `<h2>${esc(g.name || 'Exercises')}</h2>` + g.items.map(e => `<div class="card" id="c-${e.id}">${cardInner(d, e)}</div>`).join('')).join('')}
-    ${d.exercises.length ? `<p class="hint">Everything saves automatically on this phone.${syncReady() ? ' Tap Log to back up an exercise to GitHub.' : ''}</p>` : '<div class="empty">This day has no exercises — add some in Setup.</div>'}`;
+    ${d.exercises.length ? '' : '<div class="empty">This day has no exercises — add some in Setup.</div>'}
+    <div class="endrow"><button class="btn go" data-act="pick-open">+ Add exercise</button>${finishBtn(s)}</div>
+    ${d.exercises.length ? `<p class="hint">Everything saves automatically on this phone.${syncReady() ? ' Tap Log to back up an exercise to GitHub.' : ''}</p>` : ''}
+    ${ui.picker ? pickerSheet(d, s) : ''}`;
+}
+// slide-up menu: the other days' exercises that aren't in this workout yet
+function pickerSheet(d, s) {
+  const have = new Set(d.exercises.concat(extrasFor(d, s)).map(e => norm(e.name)));
+  const days = S.days.filter(x => x.id !== d.id).map(x => ({ name: x.name, items: x.exercises.filter(e => {
+    if (have.has(norm(e.name))) return false;
+    have.add(norm(e.name)); return true; // each name once, under the first day that has it
+  }) })).filter(x => x.items.length);
+  return `<div class="sheet-bg" data-act="pick-close"></div>
+  <div class="sheet" role="dialog" aria-label="Add an exercise">
+    <div class="sheet-head"><b>Add an exercise</b><button class="x" data-act="pick-close" aria-label="Close">×</button></div>
+    <p class="small">Only for this workout. Your plan stays the same.</p>
+    ${days.length ? days.map(x => `<h2>${esc(x.name)}</h2><div class="card picks">${x.items.map(e =>
+      `<button class="pick" data-act="pick-add" data-ex="${e.id}">${esc(e.name)}<span class="chev">+</span></button>`).join('')}</div>`).join('')
+    : '<div class="empty">Every exercise from your other days is already in this workout.</div>'}
+  </div>`;
 }
 
 function cardInner(d, e) {
   const s = getSession(d.id, ui.date), en = s && s.entries[e.id];
   const sets = en ? en.sets : [], note = en ? en.note : '';
-  const u = UNIT[e.unit] || UNIT.reps;
-  let h = `<div class="chead"><div><div class="ename">${esc(e.name)}${e.perSide ? ' <span class="tag">per side</span>' : ''}</div>${e.target ? `<div class="target">${esc(e.target)}</div>` : ''}</div>`;
+  const u = UNIT[e.unit] || UNIT.reps, extra = !d.exercises.some(x => x.id === e.id);
+  let h = `<div class="chead"><div><div class="ename">${esc(e.name)}${e.perSide ? ' <span class="tag">per side</span>' : ''}</div>${e.target ? `<div class="target">${esc(e.target)}</div>` : ''}${extra
+    ? `<button class="rm" data-act="extra-rm" data-ex="${e.id}">Remove</button>` : ''}</div>`;
   if (e.unit === 'done') {
     const done = en && en.done;
     h += `<button class="check ${done ? 'on' : ''}" data-act="toggle-done" data-ex="${e.id}">${done ? '✓ Done' : 'Mark done'}</button></div>`;
@@ -78,12 +100,17 @@ function cardInner(d, e) {
       ${e.weighted ? `<label><input class="in-kg" inputmode="decimal" placeholder="BW" value="${pf && pf.kg ? pf.kg : ''}" aria-label="Weight in kg"><span>kg</span></label>` : ''}
       <button class="addbtn" data-act="add-set" data-ex="${e.id}">+ Set ${sets.length + 1}</button></div>`;
   }
-  h += `<textarea class="note" data-ex="${e.id}" rows="1" placeholder="Notes…">${esc(note)}</textarea>`;
+  const prevNote = lastNoteFor(e.name, ui.date, s);
+  h += `<textarea class="note" data-ex="${e.id}" rows="1" placeholder="${prevNote ? 'Last: ' + esc(prevNote) : 'Notes…'}">${esc(note)}</textarea>`;
   return h + logBar(e, en);
 }
 function logBar(e, en) {
   if (!en || !(en.sets.length || en.note || en.done)) return '';
   return `<div class="logbar"><button class="check ${en.logged ? 'on' : ''}" data-act="log" data-ex="${e.id}">${en.logged ? '✓ Logged' : 'Log'}</button></div>`;
+}
+function finishBtn(s) {
+  return s && s.celebrated ? '<button class="btn go finish on" id="finish" disabled>✓ Workout finished</button>'
+    : '<button class="btn primary go finish" id="finish" data-act="finish">Finish workout</button>';
 }
 // update only the Log button, so typing in the note keeps focus
 function refreshLog(e) {
@@ -92,5 +119,5 @@ function refreshLog(e) {
   if (bar) bar.outerHTML = html; else c.insertAdjacentHTML('beforeend', html);
 }
 function refreshCard(e) { const c = $('#c-' + e.id); if (c) { c.innerHTML = cardInner(dayById(ui.dayId), e); c.querySelectorAll('textarea.note').forEach(grow); } }
-const curEx = id => dayById(ui.dayId).exercises.find(x => x.id === id);
+const curEx = id => workoutExs().find(x => x.id === id);
 
