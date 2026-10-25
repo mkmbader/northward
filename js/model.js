@@ -10,6 +10,18 @@ function entryFor(s, e) {
   if (!s.entries[e.id]) s.entries[e.id] = { name: e.name, unit: e.unit, sets: [], note: '', done: false };
   return s.entries[e.id];
 }
+const findEx = id => { for (const d of S.days) { const e = d.exercises.find(x => x.id === id); if (e) return e; } };
+// exercises from other days added to this one workout: logged ones live in the session's entries,
+// ones not logged yet only in ui.extra (gone after a reload, like any empty entry)
+function extrasFor(d, s) {
+  const key = d.id + '|' + ui.date, own = new Set(d.exercises.map(e => e.id));
+  const ids = [...new Set([...(s ? Object.keys(s.entries) : []), ...(ui.extra[key] || [])])].filter(id => !own.has(id));
+  return ids.map(id => {
+    const en = s && s.entries[id];
+    return findEx(id) || (en && { id, name: en.name, unit: en.unit, section: '', target: '', weighted: en.sets.some(st => st.kg), perSide: false });
+  }).filter(Boolean);
+}
+const workoutExs = () => { const d = dayById(ui.dayId); return d.exercises.concat(extrasFor(d, getSession(d.id, ui.date))); };
 function lastFor(name, date, cur) {
   const n = norm(name); let best = null;
   for (const s of S.sessions) {
@@ -45,7 +57,7 @@ function compact(st, unit) {
 }
 
 /* ---------- ui state ---------- */
-const ui = { tab: 'train', dayId: null, date: today(), prog: null, metric: null, editEx: null, cal: today().slice(0, 7) };
+const ui = { tab: 'train', dayId: null, date: today(), prog: null, metric: null, editEx: null, cal: today().slice(0, 7), extra: {}, picker: false };
 
 function render() {
   applyTheme();

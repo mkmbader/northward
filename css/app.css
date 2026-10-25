@@ -183,8 +183,21 @@ nav#tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2
 body.welcome nav#tabs{display:none}
 body.welcome{padding-bottom:calc(env(safe-area-inset-bottom) + 24px)}
 .btn.go{text-align:center;font-size:17px;padding:14px;margin-top:8px}
-.btn.finish{display:block;width:100%;margin-top:22px}
+.endrow{display:flex;gap:10px;margin-top:22px}
+.endrow .btn{flex:1;margin-top:0}
 .btn.finish.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
+.rm{background:none;border:none;padding:0;margin-top:4px;color:var(--muted);font-size:13px;text-decoration:underline}
+
+/* add-exercise menu */
+.sheet-bg{position:fixed;inset:0;z-index:15;background:rgba(0,0,0,.35);animation:celIn .2s ease both}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:16;max-width:560px;max-height:78vh;margin:0 auto;overflow-y:auto;background:var(--bg);border-radius:20px 20px 0 0;padding:16px 16px calc(env(safe-area-inset-bottom) + 20px);animation:sheetUp .25s ease both}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;font-size:18px}
+.sheet .small{margin:2px 0 4px}
+.picks{padding:0;overflow:hidden}
+.pick{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;border-top:1px solid var(--line);padding:13px 16px;font-size:16px;font-weight:600;text-align:left;color:var(--ink)}
+.pick:first-child{border-top:none}
+.pick .chev{color:var(--acc);font-size:22px;line-height:1}
+@keyframes sheetUp{from{transform:translateY(100%)}}
 
 /* celebration */
 .cel{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;animation:celIn .25s ease both}

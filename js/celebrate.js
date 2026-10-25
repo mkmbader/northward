@@ -64,8 +64,10 @@ function celebrate(kind, x) {
     kick = 'ØKT FULLFØRT';
     title = (theme === 'midnattssol' ? 'Herlig' : 'Toppen nådd') + who + '!';
     sub = `${esc(d.name)} is done.` + (theme === 'fjell' ? ' En stein til på varden.' : theme === 'midnattssol' ? ' ' + saying() + '.' : '');
-    const did = d.exercises.filter(e => { const n = x.entries[e.id]; return n && (n.sets.length || n.done); }).length;
-    stats = [[`${did}/${d.exercises.length}`, 'exercises'], [`${daysThisWeek(x.date)} of ${S.days.length}`, 'days this week'],
+    const own = new Set(d.exercises.map(e => e.id)), did = n => n && (n.sets.length || n.done);
+    const done = d.exercises.filter(e => did(x.entries[e.id])).length;
+    const extra = Object.entries(x.entries).filter(([id, n]) => !own.has(id) && did(n)).length;
+    stats = [[`${done}/${d.exercises.length}`, 'exercises' + (extra ? ` · +${extra} extra` : '')], [`${daysThisWeek(x.date)} of ${S.days.length}`, 'days this week'],
       gain ? [`+${fmtN(gain.gain)} kg`, esc(gain.name)] : [String(en.reduce((a, e) => a + e.sets.length, 0)), 'sets']];
   } else {
     kick = 'TUR FULLFØRT';
