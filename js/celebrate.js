@@ -64,7 +64,8 @@ function celebrate(kind, x) {
     kick = 'ØKT FULLFØRT';
     title = (theme === 'midnattssol' ? 'Herlig' : 'Toppen nådd') + who + '!';
     sub = `${esc(d.name)} is done.` + (theme === 'fjell' ? ' En stein til på varden.' : theme === 'midnattssol' ? ' ' + saying() + '.' : '');
-    stats = [[`${d.exercises.length}/${d.exercises.length}`, 'exercises'], [`${daysThisWeek(x.date)} of ${S.days.length}`, 'days this week'],
+    const did = d.exercises.filter(e => { const n = x.entries[e.id]; return n && (n.sets.length || n.done); }).length;
+    stats = [[`${did}/${d.exercises.length}`, 'exercises'], [`${daysThisWeek(x.date)} of ${S.days.length}`, 'days this week'],
       gain ? [`+${fmtN(gain.gain)} kg`, esc(gain.name)] : [String(en.reduce((a, e) => a + e.sets.length, 0)), 'sets']];
   } else {
     kick = 'TUR FULLFØRT';
@@ -89,9 +90,10 @@ function countUp(el, to) {
   requestAnimationFrame(step);
 }
 
-// a workout is complete once every exercise of the day is logged; celebrate that only once
+// a workout completes by itself once every exercise of the day is logged (or early via Finish); celebrate that only once
 function checkComplete(s) {
   const d = dayById(s.dayId);
   if (s.celebrated || !d.exercises.length || !d.exercises.every(e => s.entries[e.id] && s.entries[e.id].logged)) return;
-  s.celebrated = true; save(); celebrate('workout', s);
+  s.celebrated = true; save(); refreshFinish(s); celebrate('workout', s);
 }
+function refreshFinish(s) { const b = $('#finish'); if (b) b.outerHTML = finishBtn(s); }

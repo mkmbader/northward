@@ -183,6 +183,8 @@ nav#tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2
 body.welcome nav#tabs{display:none}
 body.welcome{padding-bottom:calc(env(safe-area-inset-bottom) + 24px)}
 .btn.go{text-align:center;font-size:17px;padding:14px;margin-top:8px}
+.btn.finish{display:block;width:100%;margin-top:22px}
+.btn.finish.on{background:var(--ok);border-color:var(--ok);color:var(--on-ok)}
 
 /* celebration */
 .cel{position:fixed;inset:0;z-index:20;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;animation:celIn .25s ease both}

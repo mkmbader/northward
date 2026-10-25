@@ -44,6 +44,14 @@ const ACT = {
     en.logged = true; save(); requestSync(); refreshCard(e); toast('Logged');
     checkComplete(s);
   },
+  finish() {
+    const s = getSession(ui.dayId, ui.date), d = dayById(ui.dayId);
+    const ens = s ? Object.values(s.entries).filter(en => en.sets.length || en.note || en.done) : [];
+    if (!ens.length) { toast('Log at least one exercise first'); return; }
+    ens.forEach(en => en.logged = true);
+    s.celebrated = true; save(); requestSync();
+    d.exercises.forEach(refreshCard); refreshFinish(s); celebrate('workout', s);
+  },
   'cel-close'(b) { b.closest('.cel').remove(); },
   'theme-pick'(b) { S.profile.theme = b.dataset.theme; save(); render(); },
   'welcome-done'() {

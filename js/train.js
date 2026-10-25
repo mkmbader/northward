@@ -56,6 +56,7 @@ function workoutView() {
     <h1>${esc(d.name)}</h1>
     ${ui.date !== today() ? `<p class="sub">Logging for ${fmtDate(ui.date, true)}</p>` : ''}
     ${groups.map(g => `<h2>${esc(g.name || 'Exercises')}</h2>` + g.items.map(e => `<div class="card" id="c-${e.id}">${cardInner(d, e)}</div>`).join('')).join('')}
+    ${d.exercises.length ? finishBtn(getSession(d.id, ui.date)) : ''}
     ${d.exercises.length ? `<p class="hint">Everything saves automatically on this phone.${syncReady() ? ' Tap Log to back up an exercise to GitHub.' : ''}</p>` : '<div class="empty">This day has no exercises — add some in Setup.</div>'}`;
 }
 
@@ -85,6 +86,10 @@ function cardInner(d, e) {
 function logBar(e, en) {
   if (!en || !(en.sets.length || en.note || en.done)) return '';
   return `<div class="logbar"><button class="check ${en.logged ? 'on' : ''}" data-act="log" data-ex="${e.id}">${en.logged ? '✓ Logged' : 'Log'}</button></div>`;
+}
+function finishBtn(s) {
+  return s && s.celebrated ? '<button class="btn go finish on" id="finish" disabled>✓ Workout finished</button>'
+    : '<button class="btn primary go finish" id="finish" data-act="finish">Finish workout</button>';
 }
 // update only the Log button, so typing in the note keeps focus
 function refreshLog(e) {
