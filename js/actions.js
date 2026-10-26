@@ -141,9 +141,7 @@ const ACT = {
     msg('Loading backup…');
     let b;
     try { b = await fetchBackup(); }
-    catch (e) { return msg(e === 'missing' ? 'No backup found on GitHub. Check the repo name, or log something first.'
-      : e === 'invalid' ? 'That is not a valid Lift Log backup.'
-      : typeof e === 'number' ? '⚠️ ' + (SYNC_ERR[e] || 'GitHub error ' + e) : '⚠️ No connection. Are you online?'); }
+    catch (e) { return msg(backupErr(e)); }
     const when = b.date ? ' from ' + new Date(b.date).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
     const n = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
     if (!confirm(`Restore the GitHub backup${when}?\n${n(b.data.sessions.length, 'workout')}, ${n(b.data.hikes.length, 'hike')}.\n\n`
@@ -152,6 +150,21 @@ const ACT = {
     S = b.data; save();
     Object.assign(SY, { sha: b.sha, dirty: false, err: null, failSince: null, lastSync: b.date ? Date.parse(b.date) : Date.now() }); saveSync();
     ui.dayId = null; render(); toast('Backup restored');
+  },
+  async 'sync-merge'() {
+    const msg = m => { const el = $('#sy-msg'); if (el) el.textContent = m; };
+    msg('Loading backup…');
+    let b;
+    try { b = await fetchBackup(); } catch (e) { return msg(backupErr(e)); }
+    const n = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+    const ns = b.data.sessions.filter(s => !S.sessions.some(x => x.id === s.id)).length;
+    const nh = b.data.hikes.filter(h => !S.hikes.some(x => x.id === h.id)).length;
+    if (!confirm(`Merge the GitHub backup into this phone?\nAdds ${n(ns, 'workout')} and ${n(nh, 'hike')} from GitHub. Everything on this phone stays.\n\nThen uploads the combined log to GitHub.`)) return msg('');
+    mergeBackup(b.data); save();
+    Object.assign(SY, { sha: b.sha, err: null, failSince: null }); saveSync();
+    ui.dayId = null; render(); toast('Uploading…');
+    await syncNow(true);
+    toast(SY.err ? '⚠️ Merged on phone, upload failed' : SY.dirty ? 'Merged. Offline: will upload later' : 'Merged and backed up to GitHub');
   },
   async 'sync-now'() {
     if (SY.err === 'exists' && !confirm("GitHub already has a backup this phone didn't make. Overwrite it with the data on this phone? Older versions stay in the repo history.")) return;
