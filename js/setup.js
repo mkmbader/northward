@@ -40,7 +40,7 @@ function syncCard() {
     <label class="fl">Repository<input id="sy-repo" value="${esc(SY.repo)}" placeholder="owner/repo-name" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
     <label class="fl">Token<input id="sy-token" type="password" placeholder="${hint}" autocomplete="off"></label>
     <p class="small" id="sy-msg"></p>
-    <div class="row" style="margin-top:0"><button class="btn primary" data-act="sync-save">Save &amp; test</button>${syncReady() ? '<button class="btn" data-act="sync-now">Back up now</button><button class="btn" data-act="sync-restore">Restore from GitHub</button>' : ''}${SY.token ? '<button class="btn danger" data-act="sync-clear">Remove token</button>' : ''}</div></div>`;
+    <div class="row" style="margin-top:0">${SY.err === 'exists' ? '<button class="btn primary" data-act="sync-merge">Merge with GitHub</button>' : ''}<button class="btn primary" data-act="sync-save">Save &amp; test</button>${syncReady() ? '<button class="btn" data-act="sync-now">Back up now</button><button class="btn" data-act="sync-restore">Restore from GitHub</button>' : ''}${SY.token ? '<button class="btn danger" data-act="sync-clear">Remove token</button>' : ''}</div></div>`;
 }
 function exRow(d, e, i) {
   if (ui.editEx === e.id) return `<div class="exedit">

@@ -84,7 +84,7 @@ const SYNC_ERR = {
   401: 'Backup failed: token rejected or expired. Paste a new one',
   403: "Backup failed: token can't write. Give it Contents: Read and write",
   404: 'Backup failed: repo not found',
-  exists: "GitHub already has a backup this phone didn't make. Restore it, or tap Back up now to overwrite"
+  exists: "GitHub has a backup this phone didn't make. Tap Merge with GitHub to combine them"
 };
 function since(ms) {
   const m = Math.round((Date.now() - ms) / 6e4);
@@ -111,6 +111,27 @@ async function fetchBackup() {
   const c = await gh(`/commits?path=${SYNC_FILE}&per_page=1`).then(r => r.ok ? r.json() : []).catch(() => []);
   return { data, sha, date: c[0] && c[0].commit.committer.date };
 }
+/* ---------- GitHub merge ---------- */
+// add the backup's workouts and hikes this phone doesn't have; the phone keeps its own days and profile.
+// days and exercises got new ids on this phone, so old workouts are linked to them by name
+function mergeBackup(b) {
+  const dayFor = name => S.days.find(d => norm(d.name) === norm(name));
+  const have = new Set(S.sessions.map(s => s.id)), haveH = new Set(S.hikes.map(h => h.id));
+  b.sessions.filter(s => !have.has(s.id)).forEach(s => {
+    const od = b.days.find(d => d.id === s.dayId), d = dayFor(od ? od.name : s.dayName);
+    if (d) {
+      s.dayId = d.id; const entries = {};
+      for (const [k, en] of Object.entries(s.entries)) { const e = d.exercises.find(x => norm(x.name) === norm(en.name)); entries[e ? e.id : k] = en; }
+      s.entries = entries;
+    }
+    S.sessions.push(s);
+  });
+  b.hikes.filter(h => !haveH.has(h.id)).forEach(h => S.hikes.push(h));
+}
+// error text for a failed fetchBackup, shared by Restore and Merge
+const backupErr = e => e === 'missing' ? 'No backup found on GitHub. Check the repo name, or log something first.'
+  : e === 'invalid' ? 'That is not a valid Lift Log backup.'
+  : typeof e === 'number' ? '⚠️ ' + (SYNC_ERR[e] || 'GitHub error ' + e) : '⚠️ No connection. Are you online?';
 function refreshSyncUI() {
   const el = $('#sy-status'); if (!el) return;
   el.textContent = syncStatus(); el.hidden = !el.textContent;
